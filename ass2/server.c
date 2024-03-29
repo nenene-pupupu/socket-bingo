@@ -132,7 +132,6 @@ void *handle_first_client(void *args) {
       }
       sv_control.turn = 2;
       write(sv_control.p_scks[1], msg_turn, strlen(msg_turn));
-
     }
   }
 
@@ -184,9 +183,8 @@ void *handle_second_client(void *args) {
   sv_control.num_players--;
   cl_cnt--;
   close(cl_sck);
-  
-  sv_control.status = READY;
 
+  sv_control.status = READY;
 
   return NULL;
 }
