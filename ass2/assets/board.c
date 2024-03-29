@@ -1,4 +1,6 @@
-#include "board.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 #define BOARD_SIZE 5
 
@@ -57,7 +59,7 @@ int B_PUT(Board *b, int n) {
   return 0;
 }
 
-// return : number of bingos
+// return : bingo 개수
 int B_bingo(Board *b) {
   int bingo = 0;
 
@@ -126,4 +128,25 @@ void B_print(Board *b) {
     }
     puts("");
   }
+}
+
+int main() {
+  Board *my_board = (Board *)malloc(sizeof(Board));
+
+  B_init(my_board);
+
+  int num;
+  B_print(my_board);
+
+  while (1) {
+    scanf("%d", &num);
+    if (num == 0) break;
+    B_PUT(my_board, num);
+    B_print(my_board);
+    printf("Bingo: %d\n", B_bingo(my_board));
+  }
+
+  B_destroy(my_board);
+
+  return 0;
 }
