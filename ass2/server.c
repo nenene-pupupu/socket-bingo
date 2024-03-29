@@ -10,6 +10,8 @@
 #define BUF_SIZE 1024
 #define MAX_CLIENT 10
 
+#define END_COND 1
+
 atomic_int cl_cnt = 0;
 
 const char msg_turn[] = "#TURN";
@@ -18,8 +20,9 @@ const char msg_end[] = "#END";
 
 enum game_status { READY, PLAYING, END };
 typedef struct {
-  int num_players;
-  int p_scks[2];
+  atomic_int num_players;
+  atomic_int p_scks[2];
+  // atomic_int turn;
   int turn;
   enum game_status status;
 } Setting;
@@ -120,17 +123,25 @@ void *handle_first_client(void *args) {
       int bingo = atoi(msg);
       printf("player 1's bingo: %d\n", bingo);
 
-      if (bingo >= 3) {
+      if (bingo >= END_COND) {
+        printf("player 1 wins!\n");
+        write(sv_control.p_scks[0], msg_end, strlen(msg_end));
+        write(sv_control.p_scks[1], msg_end, strlen(msg_end));
+        sv_control.status = END;
         break;
       }
-      write(sv_control.p_scks[1], msg_turn, strlen(msg_turn));
       sv_control.turn = 2;
+      write(sv_control.p_scks[1], msg_turn, strlen(msg_turn));
+
     }
   }
 
+  printf("player 1 quit\n");
   sv_control.num_players--;
   cl_cnt--;
   close(cl_sck);
+
+  sv_control.status = READY;
 
   return NULL;
 }
@@ -157,20 +168,25 @@ void *handle_second_client(void *args) {
       int bingo = atoi(msg);
       printf("player 2's bingo: %d\n", bingo);
 
-      if (bingo >= 3) {
-        printf("player 2 wins!");
+      if (bingo >= END_COND) {
+        printf("player 2 wins!\n");
         write(sv_control.p_scks[0], msg_end, strlen(msg_end));
         write(sv_control.p_scks[1], msg_end, strlen(msg_end));
+        sv_control.status = END;
         break;
       }
-      write(sv_control.p_scks[0], msg_turn, strlen(msg_turn));
       sv_control.turn = 1;
+      write(sv_control.p_scks[0], msg_turn, strlen(msg_turn));
     }
   }
 
+  printf("player 2 quit\n");
   sv_control.num_players--;
   cl_cnt--;
   close(cl_sck);
+  
+  sv_control.status = READY;
+
 
   return NULL;
 }

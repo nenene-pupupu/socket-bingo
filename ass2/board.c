@@ -2,12 +2,6 @@
 
 #define BOARD_SIZE 5
 
-typedef struct {
-  int **board;
-  int **checked;
-  // int bingo;
-} Board;
-
 void B_init(Board *b) {
   b->board = (int **)malloc(sizeof(int *) * BOARD_SIZE);
   b->checked = (int **)malloc(sizeof(int *) * BOARD_SIZE);

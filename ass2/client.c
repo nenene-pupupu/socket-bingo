@@ -10,6 +10,8 @@
 
 #define BUF_SIZE 1024
 
+Board* board;
+
 void error_handling(char *message);
 
 // void bingo_message(char *msg) {
@@ -53,7 +55,7 @@ int main(int argc, char *argv[]) {
     puts("Connected......");
   }
 
-  while (1) {
+  // while (1) {
     puts("[BINGO] ready for other player...");
 
     // fputs("Input message(Q to quit): ", stdout);
@@ -71,9 +73,14 @@ int main(int argc, char *argv[]) {
 
       if (!strncmp(message, "#START", str_len)) {
         puts("[BINGO] GAME STARTED!!");
+        board = (Board *)malloc(sizeof(Board));
+        B_init(board);
+        B_print(board);
         break;
       }
     }
+
+    int input_number;
 
     // game start
     while ((str_len = read(sock, message, BUF_SIZE - 1))) {
@@ -86,23 +93,30 @@ int main(int argc, char *argv[]) {
       if (strncmp(message, "#TURN", str_len) != 0) continue;
 
       // 대기중에 입력받는거 초기화하는 것도 필요할듯?
-      fputs("Input your number :", stdout);
-      fgets(message, BUF_SIZE, stdin);
-
-      message[strlen(message) - 1] = '\0';
-
-      while (!is_numeric(message)) {
-        fputs("It's not a number. Input your number :", stdout);
+      while (1) {
+        fputs("Input your number: ", stdout);
         fgets(message, BUF_SIZE, stdin);
-        message[str_len - 1] = 0;
+        message[strlen(message) - 1] = 0;
+        if (!is_numeric(message)) {
+          printf("Not a number. ");
+          continue;
+        }
+        input_number = atoi(message);
+        if (!B_PUT(board, input_number)) {
+          printf("Already exists or does not exist. ");
+          continue;
+        }
+        break;
       }
 
-      write(sock, "1", 1);
+      B_print(board);
+      sprintf(message, "%d", B_bingo(board));
+      write(sock, message, strlen(message));
     }
 
     // game end
     puts("Good bye~");
-  }
+  // }
 
   close(sock);
 
