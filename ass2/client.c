@@ -4,7 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <time.h>
 #include <unistd.h>
+#include "board.h"
 
 #define BUF_SIZE 1024
 
@@ -24,6 +26,8 @@ int is_numeric(const char *str) {
 }
 
 int main(int argc, char *argv[]) {
+  srand(time(NULL));
+
   int sock, str_len;
   char message[BUF_SIZE];
   struct sockaddr_in serv_adr;
