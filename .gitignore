@@ -2,5 +2,6 @@
 .DS_Store
 a.out
 *.o
+*.d
 client
 server
