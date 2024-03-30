@@ -1,22 +1,44 @@
-CC = gcc
-CFLAGS = -Wall -pthread
+CLIENT = client
+SERVER = server
+TARGET = $(CLIENT) $(SERVER)
 
-all: server client
+SRCS_CLIENT = \
+	client.c \
+	board.c \
 
-server: server.o
-	$(CC) $(CFLAGS) -o server server.o
+SRCS_SERVER = \
+	server.c \
 
-client: client.o board.o
-	$(CC) $(CFLAGS) -o client client.o board.o
+OBJS_CLIENT = $(SRCS_CLIENT:.c=.o)
+OBJS_SERVER = $(SRCS_SERVER:.c=.o)
 
-server.o: server.c
-	$(CC) $(CFLAGS) -c server.c
+OBJS = $(OBJS_CLIENT) $(OBJS_SERVER)
+DEPS = $(OBJS:.o=.d)
 
-client.o: client.c board.h
-	$(CC) $(CFLAGS) -c client.c
+CFLAGS = -Wall -Wextra
+CFLAGS += -MMD -MP
+CLFAGS += -O3
+CFLAGS += -pthread
 
-board.o: board.c board.h
-	$(CC) $(CFLAGS) -c board.c
+# for debugging
+CFLAGS += -g -fsanitize=address
+# CFLAGS += -g -fsanitize=thread
+
+all: $(TARGET)
+
+$(CLIENT): $(OBJS_CLIENT)
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(SERVER): $(OBJS_SERVER)
+	$(CC) $(CFLAGS) -o $@ $^
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f server client *.o
+	$(RM) $(OBJS) $(DEPS)
+	$(RM) $(TARGET)
+
+re: clean all
+
+-include $(DEPS)
