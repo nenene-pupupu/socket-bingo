@@ -85,6 +85,8 @@ int main(int argc, char *argv[]) {
       printf("[BINGO] max_player exceed\n");
       write(cl_sck, MSG_EXCEED, strlen(MSG_EXCEED));
       close(cl_sck);
+      cl_cnt--;
+      continue;
     }
 
     if (cl_cnt % 2) {

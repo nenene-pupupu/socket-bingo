@@ -55,6 +55,12 @@ int main(int argc, char *argv[]) {
   puts("[BINGO] Ready for other player...");
 
   while ((str_len = read(sock, message, BUF_SIZE - 1))) {
+    if (!strncmp(message, MSG_EXCEED, str_len)) {
+      puts("[BINGO] Error: The game already started");
+      close(sock);
+      return 0;
+    }
+
     if (!strncmp(message, "#START", str_len)) {
       puts("[BINGO] GAME STARTED!!");
       board = (Board *)malloc(sizeof(Board));
@@ -70,11 +76,6 @@ int main(int argc, char *argv[]) {
     // 서버에서 누가 이겼는 지는 안보내도 되려나?
     // client 상에서 먼저 빙고가 되면 자기가 이긴거 바로 확인 가능
     // 비기는 것도 확인해야하는거 인지!
-    if (!strncmp(message, MSG_EXCEED, str_len)) {
-      puts("[BINGO] Error: The game already started");
-      break;
-    }
-
     if (!strncmp(message, MSG_WIN, str_len)) {
       puts("[BINGO] You WIN!!");
       break;
