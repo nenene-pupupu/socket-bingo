@@ -8,20 +8,10 @@
 #include <unistd.h>
 
 #include "board.h"
-
-#define BUF_SIZE 1024
-
-const char MSG_START[] = "#START";
-const char MSG_TURN[] = "#TURN";
-const char MSG_EXCEED[] = "#EXCEED";
-const char MSG_OTHER[] = "#OTHER";
-const char MSG_WIN[] = "#WIN";
-const char MSG_LOSE[] = "#LOSE";
-const char MSG_TIE[] = "#TIE";
+#include "common.h"
 
 Board *board;
 
-void error_handling(char *message);
 int is_numeric(const char *str);
 
 int main(int argc, char *argv[]) {
@@ -134,10 +124,4 @@ int is_numeric(const char *str) {
     }
   }
   return 1;
-}
-
-void error_handling(char *message) {
-  fputs(message, stderr);
-  fputc('\n', stderr);
-  exit(1);
 }

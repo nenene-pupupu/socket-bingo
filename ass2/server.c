@@ -8,21 +8,13 @@
 #include <unistd.h>
 
 #include "board.h"
+#include "common.h"
 
-#define BUF_SIZE 1024
 #define MAX_CLIENT 4
 
 #define END_COND 2
 
 atomic_int cl_cnt = 0;
-
-const char MSG_START[] = "#START";
-const char MSG_TURN[] = "#TURN";
-const char MSG_EXCEED[] = "#EXCEED";
-const char MSG_OTHER[] = "#OTHER";
-const char MSG_WIN[] = "#WIN";
-const char MSG_LOSE[] = "#LOSE";
-const char MSG_TIE[] = "#TIE";
 
 enum game_status { READY, PLAYING, END };
 typedef struct {
@@ -37,7 +29,6 @@ typedef struct {
 } T_arg;
 
 void S_init(Setting *s);
-void error_handling(char *msg);
 void *handle_client(void *args);
 
 Setting sv_cntl;
@@ -130,7 +121,8 @@ void *handle_client(void *args) {
 
   printf("player#%d(%d) joined the game.\n", me, cl_sck);
 
-  while (sv_cntl.status == READY);
+  while (sv_cntl.status == READY)
+    ;
 
   int bingo;
   char other_num[3], other_bingo[3];
@@ -179,10 +171,4 @@ void *handle_client(void *args) {
 void S_init(Setting *s) {
   s->turn = 0;
   s->status = READY;
-}
-
-void error_handling(char *msg) {
-  fputs(msg, stderr);
-  fputc('\n', stderr);
-  exit(1);
 }
