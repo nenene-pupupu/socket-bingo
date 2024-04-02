@@ -11,22 +11,18 @@
 
 #define BUF_SIZE 1024
 
+const char MSG_START[] = "#START";
+const char MSG_TURN[] = "#TURN";
+const char MSG_EXCEED[] = "#EXCEED";
+const char MSG_OTHER[] = "#OTHER";
+const char MSG_WIN[] = "#WIN";
+const char MSG_LOSE[] = "#LOSE";
+const char MSG_TIE[] = "#TIE";
+
 Board *board;
 
 void error_handling(char *message);
-
-// void bingo_message(char *msg) {
-//   printf("[BINGO] %s\n", msg);
-// }
-int is_numeric(const char *str) {
-  int i, len = strlen(str);
-  for (i = 0; i < len; i++) {
-    if (!isdigit(str[i])) {
-      return 0;
-    }
-  }
-  return 1;
-}
+int is_numeric(const char *str);
 
 int main(int argc, char *argv[]) {
   srand(time(NULL));
@@ -53,25 +49,12 @@ int main(int argc, char *argv[]) {
       -1) {
     error_handling("connect() error");
   } else {
-    puts("Connected......");
+    puts("[BINGO] Connected!");
   }
 
-  // while (1) {
-  puts("[BINGO] ready for other player...");
+  puts("[BINGO] Ready for other player...");
 
-  // fputs("Input message(Q to quit): ", stdout);
-  // fgets(message, BUF_SIZE, stdin);
-
-  // write(sock, message, strlen(message));
-
-  // if (!strcmp(message, "Q\n") || !strcmp(message, "q\n")) {
-  //   break;
-  // }
-
-  // write(sock, message, strlen(message));
   while ((str_len = read(sock, message, BUF_SIZE - 1))) {
-    // printf("Message from server: [%s]\n", message);
-
     if (!strncmp(message, "#START", str_len)) {
       puts("[BINGO] GAME STARTED!!");
       board = (Board *)malloc(sizeof(Board));
@@ -82,15 +65,35 @@ int main(int argc, char *argv[]) {
   }
 
   int input_number;
-
   // game start
   while ((str_len = read(sock, message, BUF_SIZE - 1))) {
-    // 서버에서 누가 이겼는 지는 안보내도 됨
+    // 서버에서 누가 이겼는 지는 안보내도 되려나?
     // client 상에서 먼저 빙고가 되면 자기가 이긴거 바로 확인 가능
-    if (!strncmp(message, "#END", str_len)) {
+    // 비기는 것도 확인해야하는거 인지!
+    if (!strncmp(message, MSG_EXCEED, str_len)) {
+      puts("[BINGO] Error: The game already started");
       break;
     }
 
+    if (!strncmp(message, MSG_WIN, str_len)) {
+      puts("[BINGO] You WIN!!");
+      break;
+    }
+
+    if (!strncmp(message, MSG_LOSE, str_len)) {
+      puts("[BINGO] You LOSE!!");
+      break;
+    }
+
+    // 상대방 어떤거 입력했는 지
+    if (!strncmp(message, MSG_OTHER, strlen(MSG_OTHER))) {
+      read(sock, message, BUF_SIZE - 1);
+      message[2] = 0;
+      printf("other player: %s\n", message);
+      B_PUT(board, atoi(message));
+      B_print(board);
+      continue;
+    }
     if (strncmp(message, "#TURN", str_len) != 0) continue;
 
     // 대기중에 입력받는거 초기화하는 것도 필요할듯?
@@ -111,17 +114,25 @@ int main(int argc, char *argv[]) {
     }
 
     B_print(board);
-    sprintf(message, "%d", B_bingo(board));
-    write(sock, message, strlen(message));
+    // 내가 고른 번호와 빙고 개수를 보내줘야함
+    printf("my_bingos: %d\n", B_bingo(board));
+    snprintf(message, 5, "%02d%02d", input_number, B_bingo(board));
+    write(sock, message, 5);
   }
 
-  // game end
-  puts("Good bye~");
-  // }
-
+  puts("[BINGO] Good bye~");
   close(sock);
-
   return 0;
+}
+
+int is_numeric(const char *str) {
+  int i, len = strlen(str);
+  for (i = 0; i < len; i++) {
+    if (!isdigit(str[i])) {
+      return 0;
+    }
+  }
+  return 1;
 }
 
 void error_handling(char *message) {

@@ -7,44 +7,47 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#define BUF_SIZE 1024
-#define MAX_CLIENT 10
+#include "board.h"
 
-#define END_COND 1
+#define BUF_SIZE 1024
+#define MAX_CLIENT 4
+
+#define END_COND 2
 
 atomic_int cl_cnt = 0;
 
-const char msg_turn[] = "#TURN";
-const char msg_start[] = "#START";
-const char msg_end[] = "#END";
+const char MSG_START[] = "#START";
+const char MSG_TURN[] = "#TURN";
+const char MSG_EXCEED[] = "#EXCEED";
+const char MSG_OTHER[] = "#OTHER";
+const char MSG_WIN[] = "#WIN";
+const char MSG_LOSE[] = "#LOSE";
+const char MSG_TIE[] = "#TIE";
 
 enum game_status { READY, PLAYING, END };
 typedef struct {
-  atomic_int num_players;
   atomic_int p_scks[2];
-  // atomic_int turn;
   int turn;
   enum game_status status;
 } Setting;
 
-void S_init(Setting *s) {
-  s->num_players = 0;
-  s->turn = 0;
-  s->status = READY;
-}
+typedef struct {
+  int sock;
+  int id;
+} T_arg;
 
+void S_init(Setting *s);
 void error_handling(char *msg);
-void *handle_first_client(void *args);
-void *handle_second_client(void *args);
+void *handle_client(void *args);
 
-Setting sv_control;
+Setting sv_cntl;
 
 int main(int argc, char *argv[]) {
-  int sv_sck, cl_sck, str_len;
-  char msg[BUF_SIZE];
+  int sv_sck, cl_sck;
   struct sockaddr_in sv_adr, cl_adr;
   socklen_t cl_adr_sz;
   pthread_t clients[MAX_CLIENT];
+  T_arg t_arg[MAX_CLIENT];
 
   if (argc != 2) {
     printf("Usage: %s <PORT>\n", argv[0]);
@@ -69,30 +72,43 @@ int main(int argc, char *argv[]) {
     error_handling("listen() error");
   }
 
-  // cl_adr_sz = sizeof(struct sockaddr_in);
-  S_init(&sv_control);
+  S_init(&sv_cntl);
 
   while (1) {
     cl_adr_sz = sizeof(cl_adr);
     cl_sck = accept(sv_sck, (struct sockaddr *)&cl_adr, &cl_adr_sz);
     cl_cnt++;
-    printf("[알림] %s 에서 접속했습니다. (현재인원:%d)\n",
+    printf("[BINGO] %s enter the server (num players:%d)\n",
            inet_ntoa(cl_adr.sin_addr), cl_cnt);
 
+    if (cl_cnt > 2) {
+      printf("[BINGO] max_player exceed\n");
+      write(cl_sck, MSG_EXCEED, strlen(MSG_EXCEED));
+      close(cl_sck);
+    }
+
     if (cl_cnt % 2) {
-      pthread_create(&clients[0], NULL, handle_first_client, (void *)&cl_sck);
-      pthread_detach(clients[1]);
-    } else {
-      pthread_create(&clients[1], NULL, handle_second_client, (void *)&cl_sck);
+      t_arg[0].id = 0;
+      t_arg[0].sock = cl_sck;
+      pthread_create(&clients[0], NULL, handle_client, &t_arg[0]);
       pthread_detach(clients[0]);
+    } else {
+      t_arg[1].id = 1;
+      t_arg[1].sock = cl_sck;
+      pthread_create(&clients[1], NULL, handle_client, &t_arg[1]);
+      pthread_detach(clients[1]);
     }
 
     if (cl_cnt == 2) {
-      sv_control.status = PLAYING;
-      printf("0:%d\n", sv_control.p_scks[0]);
-      write(sv_control.p_scks[0], msg_start, strlen(msg_start));
-      write(sv_control.p_scks[1], msg_start, strlen(msg_start));
-      write(sv_control.p_scks[0], msg_turn, strlen(msg_turn));
+      // sleep 하지 않는 경우 p_scks[1] 값이 바뀌지 전에 write하는 경우가 생김
+      // 세마포어로 해결하면 될듯
+      // ex) 세마포어 초기 값을 2로 설정하고 player가 들어오면 값을 감소시키기
+      sleep(1);
+      sv_cntl.status = PLAYING;
+      printf("p_scks: %d %d\n", sv_cntl.p_scks[0], sv_cntl.p_scks[1]);
+      write(sv_cntl.p_scks[0], MSG_START, strlen(MSG_START));
+      write(sv_cntl.p_scks[1], MSG_START, strlen(MSG_START));
+      write(sv_cntl.p_scks[0], MSG_TURN, strlen(MSG_TURN));
     }
   }
 
@@ -101,92 +117,66 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
-void *handle_first_client(void *args) {
-  int cl_sck = *((int *)args);
-  sv_control.p_scks[0] = cl_sck;
-  sv_control.num_players++;
-
-  printf("player 1 join the game. %d\n", cl_sck);
-
+void *handle_client(void *args) {
   int str_len = 0;
   char msg[BUF_SIZE];
+  T_arg arg = *((T_arg *)args);
+  int cl_sck = arg.sock;
+  int me = arg.id;
+  int other = 1 - me;
+  sv_cntl.p_scks[me] = cl_sck;
 
-  while (sv_control.status == READY);
+  printf("player#%d(%d) joined the game.\n", me, cl_sck);
 
-  while (sv_control.status == PLAYING) {
-    if (sv_control.turn == 2) continue;
+  while (sv_cntl.status == READY);
 
+  int bingo;
+  char other_num[3], other_bingo[3];
+  while (sv_cntl.status == PLAYING) {
+    if (sv_cntl.turn == other) continue;
+    // 상대방이 고른 번호(2) + 상대방 빙고 수(2)
     if ((str_len = read(cl_sck, msg, sizeof(msg))) != 0) {
-      // 무조건 숫자가 넘어온다는 가정? (빙고수가 넘어와야 함)
-      // 어떤 숫자가 왔다면?
-      // 빙고인지 확인해야함
-      int bingo = atoi(msg);
-      printf("player 1's bingo: %d\n", bingo);
+      printf("other's message: %s\n", msg);
+
+      strncpy(other_num, msg, 2);
+      other_num[2] = '\0';
+      printf("player#%d's number: %s\n", other, other_num);
+      write(sv_cntl.p_scks[other], MSG_OTHER, strlen(MSG_OTHER));
+
+      // sleep하는 이유
+      // write가 연속적으로 있는경우 하나의 메세지로 보내지는 경우가 있음
+      sleep(1);
+
+      write(sv_cntl.p_scks[other], other_num, strlen(other_num));
+      strncpy(other_bingo, msg + 2, 2);
+      bingo = atoi(other_bingo);
+      printf("player#%d's bingo: %d\n", other, bingo);
 
       if (bingo >= END_COND) {
-        printf("player 1 wins!\n");
-        write(sv_control.p_scks[0], msg_end, strlen(msg_end));
-        write(sv_control.p_scks[1], msg_end, strlen(msg_end));
-        sv_control.status = END;
+        printf("player %d wins!\n", other);
+        write(sv_cntl.p_scks[me], MSG_WIN, strlen(MSG_WIN));
+        write(sv_cntl.p_scks[other], MSG_LOSE, strlen(MSG_LOSE));
+        sv_cntl.status = END;
         break;
       }
-      sv_control.turn = 2;
-      write(sv_control.p_scks[1], msg_turn, strlen(msg_turn));
+      sleep(1);
+      sv_cntl.turn = other;
+      write(sv_cntl.p_scks[other], MSG_TURN, strlen(MSG_TURN));
     }
   }
 
-  printf("player 1 quit\n");
-  sv_control.num_players--;
+  printf("player#%d quit\n", me);
   cl_cnt--;
   close(cl_sck);
 
-  sv_control.status = READY;
+  S_init(&sv_cntl);
 
   return NULL;
 }
 
-void *handle_second_client(void *args) {
-  int cl_sck = *((int *)args);
-  sv_control.p_scks[1] = cl_sck;
-  sv_control.num_players++;
-
-  printf("player 2 join the game. %d %d\n", cl_sck, sv_control.p_scks[0]);
-
-  int str_len = 0;
-  char msg[BUF_SIZE];
-
-  while (sv_control.status == READY);
-
-  while (sv_control.status == PLAYING) {
-    if (sv_control.turn == 1) continue;
-
-    if ((str_len = read(cl_sck, msg, sizeof(msg))) != 0) {
-      // 무조건 숫자가 넘어온다는 가정? (빙고수가 넘어와야 함)
-      // 어떤 숫자가 왔다면?
-      // 빙고인지 확인해야함
-      int bingo = atoi(msg);
-      printf("player 2's bingo: %d\n", bingo);
-
-      if (bingo >= END_COND) {
-        printf("player 2 wins!\n");
-        write(sv_control.p_scks[0], msg_end, strlen(msg_end));
-        write(sv_control.p_scks[1], msg_end, strlen(msg_end));
-        sv_control.status = END;
-        break;
-      }
-      sv_control.turn = 1;
-      write(sv_control.p_scks[0], msg_turn, strlen(msg_turn));
-    }
-  }
-
-  printf("player 2 quit\n");
-  sv_control.num_players--;
-  cl_cnt--;
-  close(cl_sck);
-
-  sv_control.status = READY;
-
-  return NULL;
+void S_init(Setting *s) {
+  s->turn = 0;
+  s->status = READY;
 }
 
 void error_handling(char *msg) {

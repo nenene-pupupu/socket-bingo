@@ -7,7 +7,7 @@ void B_init(Board *b) {
   b->checked = (int **)malloc(sizeof(int *) * BOARD_SIZE);
   for (int i = 0; i < BOARD_SIZE; ++i) {
     b->board[i] = (int *)malloc(sizeof(int) * BOARD_SIZE);
-    b->checked[i] = (int *)malloc(sizeof(int) * BOARD_SIZE);
+    b->checked[i] = calloc(BOARD_SIZE, sizeof(int));
   }
 
   int chk[BOARD_SIZE * BOARD_SIZE] = {
