@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <time.h>
 #include <unistd.h>
@@ -63,9 +64,6 @@ int main(int argc, char *argv[]) {
   int input_number;
   // game start
   while ((str_len = read(sock, message, BUF_SIZE - 1))) {
-    // 서버에서 누가 이겼는 지는 안보내도 되려나?
-    // client 상에서 먼저 빙고가 되면 자기가 이긴거 바로 확인 가능
-    // 비기는 것도 확인해야하는거 인지!
     if (!strncmp(message, MSG_WIN, str_len)) {
       puts("[BINGO] You WIN!!");
       break;
@@ -87,25 +85,44 @@ int main(int argc, char *argv[]) {
     }
     if (strncmp(message, MSG_TURN, str_len) != 0) continue;
 
-    // 대기중에 입력받는거 초기화하는 것도 필요할듯?
+    // 대기중에 입력받은 것들 무시
+    fd_set fds;
+    struct timeval tv;
+    int stdin_status;
+    FD_ZERO(&fds);
+    FD_SET(STDIN_FILENO, &fds);
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+
     while (1) {
-      fputs("Input your number: ", stdout);
-      fgets(message, BUF_SIZE, stdin);
-      message[strlen(message) - 1] = 0;
-      if (!is_numeric(message)) {
-        printf("Not a number. ");
-        continue;
+      stdin_status = select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv);
+      if (stdin_status == -1) {
+        perror("select");
+        return 1;
       }
-      input_number = atoi(message);
-      if (!B_PUT(board, input_number)) {
-        printf("Already exists or does not exist. ");
-        continue;
+      if (stdin_status > 0 && FD_ISSET(STDIN_FILENO, &fds)) {
+        char str[100];
+        fgets(str, sizeof(str), stdin);
+      } else {
+        // 입력 버퍼가 모두 사용 된 경우
+        fputs("Input your number: ", stdout);
+        fgets(message, BUF_SIZE, stdin);
+        message[strlen(message) - 1] = 0;
+        if (!is_numeric(message)) {
+          printf("Not a number. ");
+          continue;
+        }
+        input_number = atoi(message);
+        if (!B_PUT(board, input_number)) {
+          printf("Already exists or does not exist. ");
+          continue;
+        }
+        break;
       }
-      break;
     }
 
     B_print(board);
-    // 내가 고른 번호와 빙고 개수를 보내줘야함
+    // 전송 형식: 내가고른 번호(2) + 내 빙고 수(2)
     printf("my_bingos: %d\n", B_bingo(board));
     snprintf(message, 5, "%02d%02d", input_number, B_bingo(board));
     write(sock, message, 5);

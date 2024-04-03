@@ -121,8 +121,7 @@ void *handle_client(void *args) {
 
   printf("player#%d(%d) joined the game.\n", me, cl_sck);
 
-  while (sv_cntl.status == READY)
-    ;
+  while (sv_cntl.status == READY);
 
   int bingo;
   char other_num[3], other_bingo[3];
@@ -147,6 +146,7 @@ void *handle_client(void *args) {
       printf("player#%d's bingo: %d\n", other, bingo);
 
       if (bingo >= END_COND) {
+        // 비기는 것도 확인해야하는거 인지!
         printf("player %d wins!\n", other);
         write(sv_cntl.p_scks[me], MSG_WIN, strlen(MSG_WIN));
         write(sv_cntl.p_scks[other], MSG_LOSE, strlen(MSG_LOSE));
