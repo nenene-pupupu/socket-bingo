@@ -81,6 +81,11 @@ int main(int argc, char *argv[]) {
       printf("other player: %s\n", message);
       B_PUT(board, atoi(message));
       B_print(board);
+      if (B_bingo(board) >= END_COND) {
+        write(sock, MSG_FIN, strlen(MSG_FIN));
+      } else {
+        write(sock, MSG_NFIN, strlen(MSG_NFIN));
+      }
       continue;
     }
     if (strncmp(message, MSG_TURN, str_len) != 0) continue;

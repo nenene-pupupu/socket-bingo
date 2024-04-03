@@ -12,8 +12,6 @@
 
 #define MAX_CLIENT 4
 
-#define END_COND 2
-
 atomic_int cl_cnt = 0;
 
 enum game_status { READY, PLAYING, END };
@@ -104,9 +102,7 @@ int main(int argc, char *argv[]) {
       write(sv_cntl.p_scks[0], MSG_TURN, strlen(MSG_TURN));
     }
   }
-
   close(sv_sck);
-
   return 0;
 }
 
@@ -141,18 +137,46 @@ void *handle_client(void *args) {
       sleep(1);
 
       write(sv_cntl.p_scks[other], other_num, strlen(other_num));
+
+      sleep(1);
+
       strncpy(other_bingo, msg + 2, 2);
       bingo = atoi(other_bingo);
       printf("player#%d's bingo: %d\n", other, bingo);
 
+      // 상대방이 고른 번호로 인해 빙고 조건을 만족했는 지 확인
+      int flag = 0;
+      if (read(sv_cntl.p_scks[other], msg, sizeof(msg)) != -1) {
+        if (!strncmp(msg, MSG_FIN, strlen(MSG_FIN))) {
+          // 내가 고른 것으로 인해 상대방이 빙고 조건을 만족함
+          flag = 1;
+        }
+      }
+
+      // 내가 빙고 조건을 만족한 경우
       if (bingo >= END_COND) {
-        // 비기는 것도 확인해야하는거 인지!
-        printf("player %d wins!\n", other);
-        write(sv_cntl.p_scks[me], MSG_WIN, strlen(MSG_WIN));
-        write(sv_cntl.p_scks[other], MSG_LOSE, strlen(MSG_LOSE));
+        if (flag) {
+          // 상대방도 내가 고른 번호로 빙고 조건을 만족한 경우, 무승부
+          printf("TIE!\n");
+          write(sv_cntl.p_scks[me], MSG_TIE, strlen(MSG_TIE));
+          write(sv_cntl.p_scks[other], MSG_TIE, strlen(MSG_TIE));
+        } else {
+          // 상대방은 아직 빙고 조건을 만족하지 못함, 내 승리
+          printf("player %d wins!\n", other);
+          write(sv_cntl.p_scks[me], MSG_WIN, strlen(MSG_WIN));
+          write(sv_cntl.p_scks[other], MSG_LOSE, strlen(MSG_LOSE));
+        }
         sv_cntl.status = END;
         break;
       }
+
+      // 내가 고른 것으로 인해 상대방이 먼저 빙고 조건을 만족한 경우
+      if (flag) {
+        printf("player %d wins!\n", me);
+        write(sv_cntl.p_scks[other], MSG_WIN, strlen(MSG_WIN));
+        write(sv_cntl.p_scks[me], MSG_LOSE, strlen(MSG_LOSE));
+      }
+
       sleep(1);
       sv_cntl.turn = other;
       write(sv_cntl.p_scks[other], MSG_TURN, strlen(MSG_TURN));
