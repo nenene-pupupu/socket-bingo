@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
       return 0;
     }
 
-    if (!strncmp(message, "#START", str_len)) {
+    if (!strncmp(message, MSG_START, str_len)) {
       puts("[BINGO] GAME STARTED!!");
       board = (Board *)malloc(sizeof(Board));
       B_init(board);
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
       B_print(board);
       continue;
     }
-    if (strncmp(message, "#TURN", str_len) != 0) continue;
+    if (strncmp(message, MSG_TURN, str_len) != 0) continue;
 
     // 대기중에 입력받는거 초기화하는 것도 필요할듯?
     while (1) {
