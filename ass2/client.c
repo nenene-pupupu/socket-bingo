@@ -53,6 +53,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (!strncmp(message, MSG_START, str_len)) {
+      system("clear");
       puts("[BINGO] GAME STARTED!!");
       board = (Board *)malloc(sizeof(Board));
       B_init(board);
@@ -78,7 +79,8 @@ int main(int argc, char *argv[]) {
     if (!strncmp(message, MSG_OTHER, strlen(MSG_OTHER))) {
       read(sock, message, BUF_SIZE - 1);
       message[2] = 0;
-      printf("other player: %s\n", message);
+      system("clear");
+      // printf("other player: %s\n", message);
       B_PUT(board, atoi(message));
       B_print(board);
       if (B_bingo(board) >= END_COND) {
@@ -125,7 +127,7 @@ int main(int argc, char *argv[]) {
         break;
       }
     }
-
+    system("clear");
     B_print(board);
     // 전송 형식: 내가고른 번호(2) + 내 빙고 수(2)
     printf("my_bingos: %d\n", B_bingo(board));

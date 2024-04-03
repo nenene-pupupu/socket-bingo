@@ -3,7 +3,7 @@
 
 #define BUF_SIZE 1024
 
-#define END_COND 1
+#define END_COND 3
 
 #define MSG_START "#START"
 #define MSG_TURN "#TURN"
