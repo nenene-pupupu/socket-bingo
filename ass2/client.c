@@ -14,6 +14,8 @@
 Board *board;
 
 int is_numeric(const char *str);
+void print_you_win();
+void print_you_lose();
 
 int main(int argc, char *argv[]) {
   srand(time(NULL));
@@ -66,12 +68,14 @@ int main(int argc, char *argv[]) {
   // game start
   while ((str_len = read(sock, message, BUF_SIZE - 1))) {
     if (!strncmp(message, MSG_WIN, str_len)) {
-      puts("[BINGO] You WIN!!");
+      // puts("[BINGO] You WIN!!");
+      print_you_win();
       break;
     }
 
     if (!strncmp(message, MSG_LOSE, str_len)) {
-      puts("[BINGO] You LOSE!!");
+      // puts("[BINGO] You LOSE!!");
+      print_you_lose();
       break;
     }
 
@@ -148,4 +152,38 @@ int is_numeric(const char *str) {
     }
   }
   return 1;
+}
+
+void print_you_win() {
+  printf("\033[1;32m");
+  printf(" ██╗   ██╗ ██████╗ ██╗   ██╗   ██╗    ██╗██╗███╗   ██╗  ██╗\n");
+  printf(" ██║   ██║██╔═══██╗██║   ██║   ██║    ██║██║████╗  ██║  ██║\n");
+  printf(" ██║   ██║██║   ██║██║   ██║   ██║ █╗ ██║██║██╔██╗ ██║  ██║\n");
+  printf("  ╚████╔╝ ██║   ██║██║   ██║   ██║███╗██║██║██║╚██╗██║  ╚═╝\n");
+  printf("   ╚██╔╝  ╚██████╔╝╚██████╔╝   ╚███╔███╔╝██║██║ ╚████║  ██╗\n");
+  printf("   ╚═══╝   ╚═════╝  ╚═════╝     ╚══╝╚══╝ ╚═╝╚═╝  ╚═══╝  ╚═╝\n");
+  printf("\033[0m");
+}
+
+void print_you_lose() {
+  printf("\033[1;32m");
+  printf(
+      " ██╗   ██╗ ██████╗ ██╗   ██╗   ██╗      ██████╗ ███████╗███████╗  "
+      "██╗\n");
+  printf(
+      " ██║   ██║██╔═══██╗██║   ██║   ██║     ██╔═══██╗██╔════╝██╔════╝  "
+      "██║\n");
+  printf(
+      " ██║   ██║██║   ██║██║   ██║   ██║     ██║   ██║███████╗█████╗    "
+      "██║\n");
+  printf(
+      "  ╚████╔╝ ██║   ██║██║   ██║   ██║     ██║   ██║╚════██║██╔══╝    "
+      "╚═╝\n");
+  printf(
+      "   ╚██╔╝  ╚██████╔╝╚██████╔╝   ███████╗╚██████╔╝███████║███████╗  "
+      "██╗\n");
+  printf(
+      "   ╚═══╝   ╚═════╝  ╚═════╝    ╚══════╝ ╚═════╝ ╚══════╝╚══════╝  "
+      "╚═╝\n");
+  printf("\033[0m");
 }
