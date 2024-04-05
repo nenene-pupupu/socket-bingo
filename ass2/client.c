@@ -16,6 +16,7 @@ Board *board;
 int is_numeric(const char *str);
 void print_you_win();
 void print_you_lose();
+void print_bingo_count(int num);
 
 int main(int argc, char *argv[]) {
   srand(time(NULL));
@@ -60,11 +61,13 @@ int main(int argc, char *argv[]) {
       board = (Board *)malloc(sizeof(Board));
       B_init(board);
       B_print(board);
+      print_bingo_count(0);
       break;
     }
   }
 
   int input_number;
+  int bingo_count;
   // game start
   while ((str_len = read(sock, message, BUF_SIZE - 1))) {
     if (!strncmp(message, MSG_WIN, str_len)) {
@@ -86,8 +89,11 @@ int main(int argc, char *argv[]) {
       system("clear");
       // printf("other player: %s\n", message);
       B_PUT(board, atoi(message));
+      bingo_count = bingo(board);
       B_print(board);
-      if (B_bingo(board) >= END_COND) {
+      print_bingo_count(bingo_count);
+      // if (B_bingo(board) >= END_COND) {
+      if (bingo_count >= END_COND) {
         write(sock, MSG_FIN, strlen(MSG_FIN));
       } else {
         write(sock, MSG_NFIN, strlen(MSG_NFIN));
@@ -132,14 +138,17 @@ int main(int argc, char *argv[]) {
       }
     }
     system("clear");
+
+    bingo_count = bingo(board);
     B_print(board);
     // 전송 형식: 내가고른 번호(2) + 내 빙고 수(2)
-    printf("my_bingos: %d\n", B_bingo(board));
-    snprintf(message, 5, "%02d%02d", input_number, B_bingo(board));
+    // printf("my_bingos: %d\n", bingo_count);
+    print_bingo_count(bingo_count);
+    snprintf(message, 5, "%02d%02d", input_number, bingo_count);
     write(sock, message, 5);
   }
 
-  puts("[BINGO] Good bye~");
+  puts("[BINGO] GMAE OVER");
   close(sock);
   return 0;
 }
@@ -186,4 +195,31 @@ void print_you_lose() {
       "   ╚═══╝   ╚═════╝  ╚═════╝    ╚══════╝ ╚═════╝ ╚══════╝╚══════╝  "
       "╚═╝\n");
   printf("\033[0m");
+}
+
+void print_bingo_count(int num) {
+  if (num == 0) {
+    printf(" ╔═╗  ╔═╦╦═╦═╦═╗ \n");
+    printf(" ║║║  ║═╣║║║║║║║ \n");
+    printf(" ╚═╝  ╚═╩╩╩╬╗╬═╝ \n");
+    printf("           ╚═╝   \n");
+  }
+  if (num == 1) {
+    printf(" ═╗  ╔═╦╦═╦═╦═╗ \n");
+    printf("  ║  ║═╣║║║║║║║ \n");
+    printf(" ═╩═ ╚═╩╩╩╬╗╬═╝ \n");
+    printf("          ╚═╝   \n");
+  }
+  if (num == 2) {
+    printf(" ══╗ ╔═╦╦═╦═╦═╗ \n");
+    printf(" ╔═╝ ║═╣║║║║║║║ \n");
+    printf(" ╚══ ╚═╩╩╩╬╗╬═╝ \n");
+    printf("          ╚═╝   \n");
+  }
+  if (num == 3) {
+    printf(" ══╗ ╔═╦╦═╦═╦═╗ \n");
+    printf(" ══╣ ║═╣║║║║║║║ \n");
+    printf(" ══╝ ╚═╩╩╩╬╗╬═╝ \n");
+    printf("          ╚═╝   \n");
+  }
 }
