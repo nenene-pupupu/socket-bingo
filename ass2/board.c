@@ -1,24 +1,20 @@
 #include "board.h"
 
-#define BOARD_SIZE 5
-
 void B_init(Board *b) {
   b->board = (int **)malloc(sizeof(int *) * BOARD_SIZE);
   b->checked = (int **)malloc(sizeof(int *) * BOARD_SIZE);
   b->bingo = (int **)malloc(sizeof(int *) * BOARD_SIZE);
 
-  for (int i = 0; i < BOARD_SIZE; ++i) {
+  for (int i = 0; i < BOARD_SIZE; i++) {
     b->board[i] = (int *)malloc(sizeof(int) * BOARD_SIZE);
     b->checked[i] = calloc(BOARD_SIZE, sizeof(int));
     b->bingo[i] = calloc(BOARD_SIZE, sizeof(int));
   }
 
-  int chk[BOARD_SIZE * BOARD_SIZE] = {
-      0,
-  };
+  int chk[CELL_COUNT] = {};
   int cnt = 0;
-  while (cnt != BOARD_SIZE * BOARD_SIZE) {
-    int r = rand() % (BOARD_SIZE * BOARD_SIZE);
+  while (cnt != CELL_COUNT) {
+    int r = rand() % CELL_COUNT;
     if (chk[r]) continue;
     chk[r] = 1;
     b->board[cnt / 5][cnt % 5] = r + 1;
@@ -27,7 +23,7 @@ void B_init(Board *b) {
 }
 
 void B_destroy(Board *b) {
-  for (int i = 0; i < BOARD_SIZE; ++i) {
+  for (int i = 0; i < BOARD_SIZE; i++) {
     free(b->board[i]);
     free(b->checked[i]);
     free(b->bingo[i]);
@@ -40,8 +36,8 @@ void B_destroy(Board *b) {
 }
 
 int B_PUT(Board *b, int n) {
-  for (int i = 0; i < BOARD_SIZE; ++i) {
-    for (int j = 0; j < BOARD_SIZE; ++j) {
+  for (int i = 0; i < BOARD_SIZE; i++) {
+    for (int j = 0; j < BOARD_SIZE; j++) {
       if (b->board[i][j] == n) {
         if (b->checked[i][j]) {
           // already put
@@ -63,7 +59,7 @@ int B_bingo(Board *b) {
   int flag_ltrb = 1;
   int flag_lbrt = 1;
   // row bingo
-  for (int i = 0; i < BOARD_SIZE; ++i) {
+  for (int i = 0; i < BOARD_SIZE; i++) {
     int flag_row = 1;
     int flag_col = 1;
 
@@ -72,7 +68,7 @@ int B_bingo(Board *b) {
     // left-bottom to right-top
     if (b->checked[BOARD_SIZE - i - 1][i] == 0) flag_lbrt = 0;
 
-    for (int j = 0; j < BOARD_SIZE; ++j) {
+    for (int j = 0; j < BOARD_SIZE; j++) {
       // row
       if (b->checked[i][j] == 0) {
         flag_row = 0;
@@ -159,17 +155,17 @@ void color_green() { printf("\033[1;32m"); }
 void color_reset() { printf("\033[0m"); }
 
 void B_print(Board *b) {
-  for (int i = 0; i < BOARD_SIZE; ++i) {
+  for (int i = 0; i < BOARD_SIZE; i++) {
     if (i == 0) {
       printf("+");
-      for (int j = 0; j < BOARD_SIZE; ++j) {
+      for (int j = 0; j < BOARD_SIZE; j++) {
         printf("------+");
       }
       puts("");
     }
 
     printf("|");
-    for (int j = 0; j < BOARD_SIZE; ++j) {
+    for (int j = 0; j < BOARD_SIZE; j++) {
       if (b->checked[i][j]) {
         color_red();
         if (b->bingo[i][j] && bingo(b) == 3) {
@@ -188,7 +184,7 @@ void B_print(Board *b) {
     puts("");
 
     printf("+");
-    for (int j = 0; j < BOARD_SIZE; ++j) {
+    for (int j = 0; j < BOARD_SIZE; j++) {
       printf("------+");
     }
     puts("");

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #define BOARD_SIZE 5
+#define CELL_COUNT (BOARD_SIZE * BOARD_SIZE)
 
 typedef struct {
   int **board;
