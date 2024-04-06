@@ -1,11 +1,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include <stdatomic.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/socket.h>
-#include <unistd.h>
 
 #include "board.h"
 #include "common.h"
@@ -72,23 +68,17 @@ int main(int argc, char *argv[]) {
 
     if (cl_cnt > 2) {
       printf("[BINGO] max_player exceed\n");
-      write(cl_sck, MSG_EXCEED, strlen(MSG_EXCEED));
+      write_string(cl_sck, MSG_EXCEED);
       close(cl_sck);
       cl_cnt--;
       continue;
     }
 
-    if (cl_cnt % 2) {
-      t_arg[0].id = 0;
-      t_arg[0].sock = cl_sck;
-      pthread_create(&clients[0], NULL, handle_client, &t_arg[0]);
-      pthread_detach(clients[0]);
-    } else {
-      t_arg[1].id = 1;
-      t_arg[1].sock = cl_sck;
-      pthread_create(&clients[1], NULL, handle_client, &t_arg[1]);
-      pthread_detach(clients[1]);
-    }
+    int i = 1 - cl_cnt % 2;
+    t_arg[i].id = i;
+    t_arg[i].sock = cl_sck;
+    pthread_create(&clients[i], NULL, handle_client, &t_arg[i]);
+    pthread_detach(clients[i]);
 
     if (cl_cnt == 2) {
       // sleep 하지 않는 경우 p_scks[1] 값이 바뀌지 전에 write하는 경우가 생김
@@ -97,9 +87,9 @@ int main(int argc, char *argv[]) {
       sleep(1);
       sv_cntl.status = PLAYING;
       printf("p_scks: %d %d\n", sv_cntl.p_scks[0], sv_cntl.p_scks[1]);
-      write(sv_cntl.p_scks[0], MSG_START, strlen(MSG_START));
-      write(sv_cntl.p_scks[1], MSG_START, strlen(MSG_START));
-      write(sv_cntl.p_scks[0], MSG_TURN, strlen(MSG_TURN));
+      write_string(sv_cntl.p_scks[0], MSG_START);
+      write_string(sv_cntl.p_scks[1], MSG_START);
+      write_string(sv_cntl.p_scks[0], MSG_TURN);
     }
   }
   close(sv_sck);
@@ -117,7 +107,8 @@ void *handle_client(void *args) {
 
   printf("player#%d(%d) joined the game.\n", me, cl_sck);
 
-  while (sv_cntl.status == READY);
+  while (sv_cntl.status == READY)
+    ;
 
   int bingo;
   char other_num[3], other_bingo[3];
@@ -130,13 +121,13 @@ void *handle_client(void *args) {
       strncpy(other_num, msg, 2);
       other_num[2] = '\0';
       printf("player#%d's number: %s\n", other, other_num);
-      write(sv_cntl.p_scks[other], MSG_OTHER, strlen(MSG_OTHER));
+      write_string(sv_cntl.p_scks[other], MSG_OTHER);
 
       // sleep하는 이유
       // write가 연속적으로 있는경우 하나의 메세지로 보내지는 경우가 있음
       sleep(1);
 
-      write(sv_cntl.p_scks[other], other_num, strlen(other_num));
+      write_string(sv_cntl.p_scks[other], other_num);
 
       sleep(1);
 
@@ -158,13 +149,13 @@ void *handle_client(void *args) {
         if (flag) {
           // 상대방도 내가 고른 번호로 빙고 조건을 만족한 경우, 무승부
           printf("TIE!\n");
-          write(sv_cntl.p_scks[me], MSG_TIE, strlen(MSG_TIE));
-          write(sv_cntl.p_scks[other], MSG_TIE, strlen(MSG_TIE));
+          write_string(sv_cntl.p_scks[me], MSG_TIE);
+          write_string(sv_cntl.p_scks[other], MSG_TIE);
         } else {
           // 상대방은 아직 빙고 조건을 만족하지 못함, 내 승리
           printf("player %d wins!\n", other);
-          write(sv_cntl.p_scks[me], MSG_WIN, strlen(MSG_WIN));
-          write(sv_cntl.p_scks[other], MSG_LOSE, strlen(MSG_LOSE));
+          write_string(sv_cntl.p_scks[me], MSG_WIN);
+          write_string(sv_cntl.p_scks[other], MSG_LOSE);
         }
         sv_cntl.status = END;
         break;
@@ -173,13 +164,13 @@ void *handle_client(void *args) {
       // 내가 고른 것으로 인해 상대방이 먼저 빙고 조건을 만족한 경우
       if (flag) {
         printf("player %d wins!\n", me);
-        write(sv_cntl.p_scks[other], MSG_WIN, strlen(MSG_WIN));
-        write(sv_cntl.p_scks[me], MSG_LOSE, strlen(MSG_LOSE));
+        write_string(sv_cntl.p_scks[other], MSG_WIN);
+        write_string(sv_cntl.p_scks[me], MSG_LOSE);
       }
 
       sleep(1);
       sv_cntl.turn = other;
-      write(sv_cntl.p_scks[other], MSG_TURN, strlen(MSG_TURN));
+      write_string(sv_cntl.p_scks[other], MSG_TURN);
     }
   }
 

@@ -1,12 +1,8 @@
 #include <arpa/inet.h>
 #include <ctype.h>  //isdigit
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <time.h>
-#include <unistd.h>
 
 #include "board.h"
 #include "common.h"
@@ -94,9 +90,9 @@ int main(int argc, char *argv[]) {
       print_bingo_count(bingo_count);
       // if (B_bingo(board) >= END_COND) {
       if (bingo_count >= END_COND) {
-        write(sock, MSG_FIN, strlen(MSG_FIN));
+        write_string(sock, MSG_FIN);
       } else {
-        write(sock, MSG_NFIN, strlen(MSG_NFIN));
+        write_string(sock, MSG_NFIN);
       }
       continue;
     }
