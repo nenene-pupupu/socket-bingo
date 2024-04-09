@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
       // sleep 하지 않는 경우 p_scks[1] 값이 바뀌지 전에 write하는 경우가 생김
       // 세마포어로 해결하면 될듯
       // ex) 세마포어 초기 값을 2로 설정하고 player가 들어오면 값을 감소시키기
-      sleep(1);
+      usleep(200);
       sv_cntl.status = PLAYING;
       printf("p_scks: %d %d\n", sv_cntl.p_scks[0], sv_cntl.p_scks[1]);
       write_string(sv_cntl.p_scks[0], MSG_START);
@@ -125,11 +125,11 @@ void *handle_client(void *args) {
 
       // sleep하는 이유
       // write가 연속적으로 있는경우 하나의 메세지로 보내지는 경우가 있음
-      sleep(1);
+      usleep(200);
 
       write_string(sv_cntl.p_scks[other], other_num);
 
-      sleep(1);
+      usleep(200);
 
       strncpy(other_bingo, msg + 2, 2);
       bingo = atoi(other_bingo);
@@ -168,7 +168,7 @@ void *handle_client(void *args) {
         write_string(sv_cntl.p_scks[me], MSG_LOSE);
       }
 
-      sleep(1);
+      usleep(200);
       sv_cntl.turn = other;
       write_string(sv_cntl.p_scks[other], MSG_TURN);
     }
