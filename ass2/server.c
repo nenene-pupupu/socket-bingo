@@ -27,6 +27,9 @@ void *handle_client(void *args);
 
 Setting sv_cntl;
 
+pthread_mutex_t turn_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t turn_cond = PTHREAD_COND_INITIALIZER;
+
 int main(int argc, char *argv[]) {
   int sv_sck, cl_sck;
   struct sockaddr_in sv_adr, cl_adr;
@@ -77,6 +80,7 @@ int main(int argc, char *argv[]) {
     int i = 1 - cl_cnt % 2;
     t_arg[i].id = i;
     t_arg[i].sock = cl_sck;
+    sv_cntl.p_scks[i] = cl_sck;
     pthread_create(&clients[i], NULL, handle_client, &t_arg[i]);
     pthread_detach(clients[i]);
 
@@ -93,17 +97,19 @@ int main(int argc, char *argv[]) {
     }
   }
   close(sv_sck);
+
+  pthread_mutex_destroy(&turn_mutex);
+  pthread_cond_destroy(&turn_cond);
+
   return 0;
 }
 
 void *handle_client(void *args) {
-  int str_len = 0;
   char msg[BUF_SIZE];
   T_arg arg = *((T_arg *)args);
   int cl_sck = arg.sock;
   int me = arg.id;
   int other = 1 - me;
-  sv_cntl.p_scks[me] = cl_sck;
 
   printf("player#%d(%d) joined the game.\n", me, cl_sck);
 
@@ -113,9 +119,14 @@ void *handle_client(void *args) {
   int bingo;
   char other_num[3], other_bingo[3];
   while (sv_cntl.status == PLAYING) {
-    if (sv_cntl.turn == other) continue;
+    pthread_mutex_lock(&turn_mutex);
+    while (sv_cntl.turn == other) {
+      pthread_cond_wait(&turn_cond, &turn_mutex);
+    }
+    pthread_mutex_unlock(&turn_mutex);
+
     // 상대방이 고른 번호(2) + 상대방 빙고 수(2)
-    if ((str_len = read(cl_sck, msg, sizeof(msg))) != 0) {
+    if (read(cl_sck, msg, sizeof(msg)) != 0) {
       printf("other's message: %s\n", msg);
 
       strncpy(other_num, msg, 2);
@@ -168,9 +179,11 @@ void *handle_client(void *args) {
         write_string(sv_cntl.p_scks[me], MSG_LOSE);
       }
 
-      usleep(200);
+      pthread_mutex_lock(&turn_mutex);
       sv_cntl.turn = other;
       write_string(sv_cntl.p_scks[other], MSG_TURN);
+      pthread_cond_signal(&turn_cond);
+      pthread_mutex_unlock(&turn_mutex);
     }
   }
 
