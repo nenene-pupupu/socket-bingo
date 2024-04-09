@@ -1,5 +1,7 @@
 #include "board.h"
 
+#include "common.h"
+
 void B_init(Board *b) {
   b->board = (int **)malloc(sizeof(int *) * BOARD_SIZE);
   b->checked = (int **)malloc(sizeof(int *) * BOARD_SIZE);
@@ -168,7 +170,7 @@ void B_print(Board *b) {
     for (int j = 0; j < BOARD_SIZE; j++) {
       if (b->checked[i][j]) {
         color_red();
-        if (b->bingo[i][j] && bingo(b) == 3) {
+        if (b->bingo[i][j] && bingo(b) == END_COND) {
           color_green();
           printf(" (%2d) ", b->board[i][j]);
         } else if (b->bingo[i][j])
