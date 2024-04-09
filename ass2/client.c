@@ -78,6 +78,11 @@ int main(int argc, char *argv[]) {
       break;
     }
 
+    if (!strncmp(message, MSG_TIE, str_len)) {
+      printf("tie..\n");
+      break;
+    }
+
     // 상대방 어떤거 입력했는 지
     if (!strncmp(message, MSG_OTHER, strlen(MSG_OTHER))) {
       read(sock, message, BUF_SIZE - 1);
