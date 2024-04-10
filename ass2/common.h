@@ -16,5 +16,6 @@
 #define MSG_WIN "#WIN"
 #define MSG_LOSE "#LOSE"
 #define MSG_TIE "#TIE"
+#define MSG_ERROR "#ERROR"
 
 void error_handling(char *message);

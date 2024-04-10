@@ -1,5 +1,5 @@
 #include <arpa/inet.h>
-#include <ctype.h>  //isdigit
+#include <ctype.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <time.h>
@@ -9,6 +9,7 @@
 
 Board *board;
 
+void ignore_input();
 int is_numeric(const char *str);
 void print_you_win();
 void print_you_lose();
@@ -17,12 +18,11 @@ void print_bingo_count(int num);
 int main(int argc, char *argv[]) {
   srand(time(NULL));
 
-  int sock, str_len;
-  char message[BUF_SIZE];
+  int sock;
   struct sockaddr_in serv_adr;
 
   if (argc != 3) {
-    printf("Usage: %s <IP> <PORT>\n", argv[0]);
+    fprintf(stderr, "Usage: %s <IP> <PORT>\n", argv[0]);
     exit(1);
   }
 
@@ -30,127 +30,140 @@ int main(int argc, char *argv[]) {
     error_handling("socket() error");
   }
 
-  memset(&serv_adr, 0, sizeof(struct sockaddr_in));
+  memset(&serv_adr, 0, sizeof(serv_adr));
   serv_adr.sin_family = AF_INET;
   serv_adr.sin_addr.s_addr = inet_addr(argv[1]);
   serv_adr.sin_port = htons(atoi(argv[2]));
 
-  if (connect(sock, (struct sockaddr *)&serv_adr, sizeof(struct sockaddr_in)) ==
-      -1) {
+  if (connect(sock, (struct sockaddr *)&serv_adr, sizeof(serv_adr)) == -1) {
     error_handling("connect() error");
-  } else {
-    puts("[BINGO] Connected!");
   }
 
-  puts("[BINGO] Ready for other player...");
+  printf("[BINGO] Connected!\n");
+  printf("[BINGO] Ready for other player...\n");
 
-  while ((str_len = read(sock, message, BUF_SIZE - 1))) {
-    if (!strncmp(message, MSG_EXCEED, str_len)) {
-      puts("[BINGO] Error: The game already started");
-      close(sock);
-      return 0;
+  int n;
+  char buf[BUF_SIZE];
+
+  while (1) {
+    if ((n = read(sock, buf, BUF_SIZE - 1)) == 0) {
+      error_handling("server has been terminated");
     }
+    buf[n] = 0;
 
-    if (!strncmp(message, MSG_START, str_len)) {
-      system("clear");
-      puts("[BINGO] GAME STARTED!!");
-      board = (Board *)malloc(sizeof(Board));
-      B_init(board);
-      B_print(board);
-      print_bingo_count(0);
+    if (!strcmp(buf, MSG_START)) {
       break;
     }
   }
 
-  int input_number;
-  int bingo_count;
-  // game start
-  while ((str_len = read(sock, message, BUF_SIZE - 1))) {
-    if (!strncmp(message, MSG_WIN, str_len)) {
-      // puts("[BINGO] You WIN!!");
+  system("clear");
+
+  printf("[BINGO] GAME STARTED!!\n");
+
+  Board *board = B_init();
+  B_print(board);
+  print_bingo_count(0);
+
+  while (1) {
+    if ((n = read(sock, buf, BUF_SIZE - 1)) == 0) {
+      error_handling("server has been terminated");
+    }
+    buf[n] = 0;
+
+    if (!strcmp(buf, MSG_ERROR)) {
+      fprintf(stderr, "the other player has been disconnected\n");
+      break;
+    } else if (!strcmp(buf, MSG_WIN)) {
       print_you_win();
       break;
-    }
-
-    if (!strncmp(message, MSG_LOSE, str_len)) {
-      // puts("[BINGO] You LOSE!!");
+    } else if (!strcmp(buf, MSG_LOSE)) {
       print_you_lose();
       break;
-    }
-
-    if (!strncmp(message, MSG_TIE, str_len)) {
-      printf("tie..\n");
+    } else if (!strcmp(buf, MSG_TIE)) {
+      printf("tie...\n");
       break;
-    }
+    } else if (!strncmp(buf, MSG_OTHER, strlen(MSG_OTHER))) {
+      // 상대방 어떤거 입력했는 지
+      int num;
+      sscanf(buf, "%*s %d", &num);
 
-    // 상대방 어떤거 입력했는 지
-    if (!strncmp(message, MSG_OTHER, strlen(MSG_OTHER))) {
-      read(sock, message, BUF_SIZE - 1);
-      message[2] = 0;
       system("clear");
-      // printf("other player: %s\n", message);
-      B_PUT(board, atoi(message));
-      bingo_count = bingo(board);
+
+      B_PUT(board, num);
+
+      int bingo_count = bingo(board);
       B_print(board);
       print_bingo_count(bingo_count);
-      // if (B_bingo(board) >= END_COND) {
+
       if (bingo_count >= END_COND) {
         dprintf(sock, "%s", MSG_FIN);
       } else {
         dprintf(sock, "%s", MSG_NFIN);
       }
-      continue;
-    }
-    if (strncmp(message, MSG_TURN, str_len) != 0) continue;
+    } else if (!strcmp(buf, MSG_TURN)) {
+      // 대기중에 입력받은 것들 무시
+      ignore_input();
 
-    // 대기중에 입력받은 것들 무시
-    fd_set fds;
-    struct timeval tv;
-    int stdin_status;
-    FD_ZERO(&fds);
-    FD_SET(STDIN_FILENO, &fds);
-    tv.tv_sec = 0;
-    tv.tv_usec = 0;
+      int num;
+      while (1) {
+        printf("Input your number: ");
+        scanf("%s", buf);
 
-    while (1) {
-      stdin_status = select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv);
-      if (stdin_status == -1) {
-        perror("select");
-        return 1;
-      }
-      if (stdin_status > 0 && FD_ISSET(STDIN_FILENO, &fds)) {
-        char str[100];
-        fgets(str, sizeof(str), stdin);
-      } else {
-        // 입력 버퍼가 모두 사용 된 경우
-        fputs("Input your number: ", stdout);
-        fgets(message, BUF_SIZE, stdin);
-        message[strlen(message) - 1] = 0;
-        if (!is_numeric(message)) {
+        if (!is_numeric(buf)) {
           printf("Not a number. ");
           continue;
         }
-        input_number = atoi(message);
-        if (!B_PUT(board, input_number)) {
+
+        num = atoi(buf);
+        if (!B_PUT(board, num)) {
           printf("Already exists or does not exist. ");
           continue;
         }
+
         break;
       }
-    }
-    system("clear");
 
-    bingo_count = bingo(board);
-    B_print(board);
-    // 전송 형식: 내가고른 번호(2) + 내 빙고 수(2)
-    // printf("my_bingos: %d\n", bingo_count);
-    print_bingo_count(bingo_count);
-    dprintf(sock, "%02d%02d", input_number, bingo_count);
+      system("clear");
+
+      int bingo_count = bingo(board);
+      B_print(board);
+      print_bingo_count(bingo_count);
+
+      dprintf(sock, "%d %d\n", num, bingo_count);
+    } else {
+      continue;
+    }
   }
 
-  puts("[BINGO] GMAE OVER");
+  printf("[BINGO] GAME OVER\n");
+
   close(sock);
+
   return 0;
+}
+
+void ignore_input() {
+  fd_set fds;
+  FD_ZERO(&fds);
+  FD_SET(STDIN_FILENO, &fds);
+
+  struct timeval tv;
+  tv.tv_sec = 0;
+  tv.tv_usec = 0;
+
+  while (1) {
+    int stdin_status = select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv);
+    if (stdin_status == -1) {
+      error_handling("select() error");
+    }
+
+    if (stdin_status > 0 && FD_ISSET(STDIN_FILENO, &fds)) {
+      char str[100];
+      fgets(str, sizeof(str), stdin);
+    } else {
+      break;
+    }
+  }
 }
 
 int is_numeric(const char *str) {
