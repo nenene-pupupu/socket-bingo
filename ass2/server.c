@@ -76,8 +76,6 @@ void *handle_game(void *arg) {
   dprintf(sockets[0], "%s", MSG_START);
   dprintf(sockets[1], "%s", MSG_START);
 
-  usleep(100);
-
   int turn = 0;
   while (1) {
     int other = 1 - turn;

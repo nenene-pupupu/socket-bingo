@@ -46,13 +46,15 @@ int main(int argc, char *argv[]) {
   char buf[BUF_SIZE];
 
   while (1) {
-    if ((n = read(sock, buf, BUF_SIZE - 1)) == 0) {
+    if ((n = read(sock, buf, strlen(MSG_START))) == 0) {
       error_handling("server has been terminated");
     }
     buf[n] = 0;
 
     if (!strcmp(buf, MSG_START)) {
       break;
+    } else {
+      fprintf(stderr, "unknown %d characters received\n", n);
     }
   }
 
