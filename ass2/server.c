@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
 
     if (cl_cnt > 2) {
       printf("[BINGO] max_player exceed\n");
-      write_string(cl_sck, MSG_EXCEED);
+      dprintf(cl_sck, "%s", MSG_EXCEED);
       close(cl_sck);
       cl_cnt--;
       continue;
@@ -91,9 +91,9 @@ int main(int argc, char *argv[]) {
       usleep(200);
       sv_cntl.status = PLAYING;
       printf("p_scks: %d %d\n", sv_cntl.p_scks[0], sv_cntl.p_scks[1]);
-      write_string(sv_cntl.p_scks[0], MSG_START);
-      write_string(sv_cntl.p_scks[1], MSG_START);
-      write_string(sv_cntl.p_scks[0], MSG_TURN);
+      dprintf(sv_cntl.p_scks[0], "%s", MSG_START);
+      dprintf(sv_cntl.p_scks[1], "%s", MSG_START);
+      dprintf(sv_cntl.p_scks[0], "%s", MSG_TURN);
     }
   }
   close(sv_sck);
@@ -132,13 +132,13 @@ void *handle_client(void *args) {
       strncpy(other_num, msg, 2);
       other_num[2] = '\0';
       printf("player#%d's number: %s\n", other, other_num);
-      write_string(sv_cntl.p_scks[other], MSG_OTHER);
+      dprintf(sv_cntl.p_scks[other], "%s", MSG_OTHER);
 
       // sleep하는 이유
       // write가 연속적으로 있는경우 하나의 메세지로 보내지는 경우가 있음
       usleep(200);
 
-      write_string(sv_cntl.p_scks[other], other_num);
+      dprintf(sv_cntl.p_scks[other], "%s", other_num);
 
       usleep(200);
 
@@ -160,13 +160,13 @@ void *handle_client(void *args) {
         if (flag) {
           // 상대방도 내가 고른 번호로 빙고 조건을 만족한 경우, 무승부
           printf("TIE!\n");
-          write_string(sv_cntl.p_scks[me], MSG_TIE);
-          write_string(sv_cntl.p_scks[other], MSG_TIE);
+          dprintf(sv_cntl.p_scks[me], "%s", MSG_TIE);
+          dprintf(sv_cntl.p_scks[other], "%s", MSG_TIE);
         } else {
           // 상대방은 아직 빙고 조건을 만족하지 못함, 내 승리
           printf("player %d wins!\n", other);
-          write_string(sv_cntl.p_scks[me], MSG_WIN);
-          write_string(sv_cntl.p_scks[other], MSG_LOSE);
+          dprintf(sv_cntl.p_scks[me], "%s", MSG_WIN);
+          dprintf(sv_cntl.p_scks[other], "%s", MSG_LOSE);
         }
         sv_cntl.status = END;
         break;
@@ -175,13 +175,13 @@ void *handle_client(void *args) {
       // 내가 고른 것으로 인해 상대방이 먼저 빙고 조건을 만족한 경우
       if (flag) {
         printf("player %d wins!\n", me);
-        write_string(sv_cntl.p_scks[other], MSG_WIN);
-        write_string(sv_cntl.p_scks[me], MSG_LOSE);
+        dprintf(sv_cntl.p_scks[other], "%s", MSG_WIN);
+        dprintf(sv_cntl.p_scks[me], "%s", MSG_LOSE);
       }
 
       pthread_mutex_lock(&turn_mutex);
       sv_cntl.turn = other;
-      write_string(sv_cntl.p_scks[other], MSG_TURN);
+      dprintf(sv_cntl.p_scks[other], "%s", MSG_TURN);
       pthread_cond_signal(&turn_cond);
       pthread_mutex_unlock(&turn_mutex);
     }

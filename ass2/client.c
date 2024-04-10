@@ -95,9 +95,9 @@ int main(int argc, char *argv[]) {
       print_bingo_count(bingo_count);
       // if (B_bingo(board) >= END_COND) {
       if (bingo_count >= END_COND) {
-        write_string(sock, MSG_FIN);
+        dprintf(sock, "%s", MSG_FIN);
       } else {
-        write_string(sock, MSG_NFIN);
+        dprintf(sock, "%s", MSG_NFIN);
       }
       continue;
     }
@@ -145,8 +145,7 @@ int main(int argc, char *argv[]) {
     // 전송 형식: 내가고른 번호(2) + 내 빙고 수(2)
     // printf("my_bingos: %d\n", bingo_count);
     print_bingo_count(bingo_count);
-    snprintf(message, 5, "%02d%02d", input_number, bingo_count);
-    write(sock, message, 5);
+    dprintf(sock, "%02d%02d", input_number, bingo_count);
   }
 
   puts("[BINGO] GMAE OVER");

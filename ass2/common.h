@@ -17,5 +17,4 @@
 #define MSG_LOSE "#LOSE"
 #define MSG_TIE "#TIE"
 
-void write_string(int fd, const char *str);
 void error_handling(char *message);
