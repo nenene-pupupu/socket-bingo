@@ -11,7 +11,7 @@ typedef struct {
   // int bingo;
 } Board;
 
-void B_init(Board *b);
+Board *B_init();
 void B_destroy(Board *b);
 int B_PUT(Board *b, int n);
 int B_bingo(Board *b);

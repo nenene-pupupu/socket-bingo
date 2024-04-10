@@ -2,7 +2,9 @@
 
 #include "common.h"
 
-void B_init(Board *b) {
+Board *B_init() {
+  Board *b = (Board *)malloc(sizeof(Board));
+
   b->board = (int **)malloc(sizeof(int *) * BOARD_SIZE);
   b->checked = (int **)malloc(sizeof(int *) * BOARD_SIZE);
   b->bingo = (int **)malloc(sizeof(int *) * BOARD_SIZE);
@@ -22,6 +24,8 @@ void B_init(Board *b) {
     b->board[cnt / 5][cnt % 5] = r + 1;
     cnt++;
   }
+
+  return b;
 }
 
 void B_destroy(Board *b) {
