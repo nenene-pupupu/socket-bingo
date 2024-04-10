@@ -7,8 +7,6 @@
 #include "board.h"
 #include "common.h"
 
-Board *board;
-
 void ignore_input();
 int is_numeric(const char *str);
 void print_you_win();
