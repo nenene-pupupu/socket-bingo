@@ -1,5 +1,6 @@
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <sys/select.h>
 
 #include "common.h"
 
@@ -45,17 +46,41 @@ int main(int argc, char *argv[]) {
 
     cl_scks[cl_cnt++ % 2] = cl_sck;
 
-    printf("[BINGO] %s enter the server (player#%d)\n",
-           inet_ntoa(cl_adr.sin_addr), cl_cnt);
+    fd_set fds;
+
+    struct timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;
 
     if (cl_cnt % 2 == 0) {
-      int *args = (int *)malloc(sizeof(int) * 3);
-      args[0] = cl_cnt - 1;
-      memcpy(args + 1, cl_scks, sizeof(int) * 2);
+      FD_ZERO(&fds);
+      FD_SET(cl_scks[0], &fds);
 
-      pthread_t tid;
-      pthread_create(&tid, NULL, handle_game, args);
-      pthread_detach(tid);
+      int status = select(cl_scks[0] + 1, &fds, NULL, NULL, &timeout);
+      if (status == -1) {
+        error_handling("select() error");
+      } else if (status == 0) {
+        printf("[BINGO] %s enter the server (player#%d)\n",
+               inet_ntoa(cl_adr.sin_addr), cl_cnt);
+        int *args = (int *)malloc(sizeof(int) * 3);
+        args[0] = cl_cnt - 1;
+        memcpy(args + 1, cl_scks, sizeof(int) * 2);
+
+        pthread_t tid;
+        pthread_create(&tid, NULL, handle_game, args);
+        pthread_detach(tid);
+      } else {
+        // 플레이어가 기다리다 접속을 종료한 경우
+        close(cl_scks[0]);
+        printf("[BINGO] player#%d left the game\n", cl_cnt - 1);
+        printf("[BINGO] %s enter the server (player#%d)\n",
+               inet_ntoa(cl_adr.sin_addr), cl_cnt - 1);
+        cl_scks[0] = cl_sck;
+        cl_cnt--;
+      }
+    } else {
+      printf("[BINGO] %s enter the server (player#%d)\n",
+             inet_ntoa(cl_adr.sin_addr), cl_cnt);
     }
   }
 
