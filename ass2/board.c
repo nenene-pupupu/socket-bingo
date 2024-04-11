@@ -17,6 +17,7 @@ Board *B_init() {
 
   int chk[CELL_COUNT] = {};
   int cnt = 0;
+
   while (cnt != CELL_COUNT) {
     int r = rand() % CELL_COUNT;
     if (chk[r]) continue;
@@ -60,41 +61,6 @@ int B_PUT(Board *b, int n) {
 
 // return : number of bingos
 int B_bingo(Board *b) {
-  int bingo = 0;
-
-  int flag_ltrb = 1;
-  int flag_lbrt = 1;
-  // row bingo
-  for (int i = 0; i < BOARD_SIZE; i++) {
-    int flag_row = 1;
-    int flag_col = 1;
-
-    // left-top to right-bottom
-    if (b->checked[i][i] == 0) flag_ltrb = 0;
-    // left-bottom to right-top
-    if (b->checked[BOARD_SIZE - i - 1][i] == 0) flag_lbrt = 0;
-
-    for (int j = 0; j < BOARD_SIZE; j++) {
-      // row
-      if (b->checked[i][j] == 0) {
-        flag_row = 0;
-      }
-      // col
-      if (b->checked[j][i] == 0) {
-        flag_col = 0;
-      }
-    }
-    if (flag_col) bingo++;
-    if (flag_row) bingo++;
-  }
-
-  if (flag_ltrb) bingo++;
-  if (flag_lbrt) bingo++;
-
-  return bingo;
-}
-
-int bingo(Board *b) {
   int bingo = 0;
   int flag_ltrb = 1;
   int flag_lbrt = 1;
@@ -174,7 +140,7 @@ void B_print(Board *b) {
     for (int j = 0; j < BOARD_SIZE; j++) {
       if (b->checked[i][j]) {
         color_red();
-        if (b->bingo[i][j] && bingo(b) == END_COND) {
+        if (b->bingo[i][j] && B_bingo(b) == END_COND) {
           color_green();
           printf(" (%2d) ", b->board[i][j]);
         } else if (b->bingo[i][j])

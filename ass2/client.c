@@ -9,6 +9,7 @@
 
 void ignore_input();
 int is_numeric(const char *str);
+void print_draw();
 void print_you_win();
 void print_you_lose();
 void print_bingo_count(int num);
@@ -80,7 +81,7 @@ int main(int argc, char *argv[]) {
       print_you_lose();
       break;
     } else if (!strcmp(buf, MSG_TIE)) {
-      printf("tie...\n");
+      print_draw();
       break;
     } else if (!strncmp(buf, MSG_OTHER, strlen(MSG_OTHER))) {
       // 상대방 어떤거 입력했는 지
@@ -91,7 +92,7 @@ int main(int argc, char *argv[]) {
 
       B_PUT(board, num);
 
-      int bingo_count = bingo(board);
+      int bingo_count = B_bingo(board);
       B_print(board);
       print_bingo_count(bingo_count);
 
@@ -125,7 +126,7 @@ int main(int argc, char *argv[]) {
 
       system("clear");
 
-      int bingo_count = bingo(board);
+      int bingo_count = B_bingo(board);
       B_print(board);
       print_bingo_count(bingo_count);
 
@@ -173,6 +174,17 @@ int is_numeric(const char *str) {
     }
   }
   return 1;
+}
+
+void print_draw() {
+  printf("\033[1;32m");
+  printf("██████╗  ██████╗  █████╗ ██╗    ██╗  ██╗\n");
+  printf("██╔═══██╗██╔══██╗██╔══██╗██║    ██║  ██║\n");
+  printf("██║   ██║██████╔╝███████║██║ █╗ ██║  ██║\n");
+  printf("██║   ██║██╔══██╗██╔══██║██║███╗██║  ╚═╝\n");
+  printf("██████╔╝ ██║  ██║██║  ██║╚███╔███╔╝  ██╗\n");
+  printf(" ╚════╝  ╚═╝  ╚═╝╚═╝  ╚═╝ ╚══╝╚══╝   ╚═╝\n");
+  printf("\033[0m");
 }
 
 void print_you_win() {
