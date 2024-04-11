@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
       continue;
     }
   }
-
+  B_destroy(board);
   printf("[BINGO] GAME OVER\n");
 
   close(sock);
