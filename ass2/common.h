@@ -11,7 +11,7 @@
 #define MSG_TURN "#TURN"
 #define MSG_EXCEED "#EXCEED"
 #define MSG_OTHER "#OTHER"
-#define MSG_FIN "#FIN"
+#define MSG_FNSH "#FNSH"
 #define MSG_NFIN "#NFIN"
 #define MSG_WIN "#WIN"
 #define MSG_LOSE "#LOSE"

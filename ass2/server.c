@@ -102,7 +102,7 @@ void *handle_game(void *arg) {
     buf[n] = 0;
 
     int is_turn_fin = bingo_count >= END_COND;
-    int is_other_fin = !strcmp(buf, MSG_FIN);
+    int is_other_fin = !strcmp(buf, MSG_FNSH);
 
     if (!is_turn_fin && !is_other_fin) {
       turn = other;

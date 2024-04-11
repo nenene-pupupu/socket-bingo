@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
       print_bingo_count(bingo_count);
 
       if (bingo_count >= END_COND) {
-        dprintf(sock, "%s", MSG_FIN);
+        dprintf(sock, "%s", MSG_FNSH);
       } else {
         dprintf(sock, "%s", MSG_NFIN);
       }
