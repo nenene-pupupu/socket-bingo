@@ -24,10 +24,6 @@ CFLAGS += -MMD -MP
 CLFAGS += -O3
 CFLAGS += -pthread
 
-# for debugging
-CFLAGS += -g -fsanitize=address
-# CFLAGS += -g -fsanitize=thread
-
 all: $(TARGET)
 
 $(CLIENT): $(OBJS_COMMON) $(OBJS_CLIENT)
