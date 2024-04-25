@@ -36,8 +36,8 @@
 ## 실행 방법
 
 ```bash
-git clone https://github.com/wnsah814/network-protocol-nenene-pupupu.git
-cd network-protocol-nenene-pupupu/ass2
+git clone https://github.com/nenene-pupupu/socket-bingo.git
+cd socket-bingo
 ```
 
 ```bash
