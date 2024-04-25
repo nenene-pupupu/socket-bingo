@@ -99,18 +99,18 @@ make re
 
 ## 실행화면
 
-![다른 클라이언트 접속 대기 화면](assets/images/Untitled.png)
+![다른 클라이언트 접속 대기 화면](images/Untitled.png)
 
 다른 클라이언트 접속 대기 화면
 
-![게임 시작 화면](assets/images/Untitled%201.png)
+![게임 시작 화면](images/Untitled%201.png)
 
 게임 시작 화면
 
-![빙고 개수 & 빙고 발생 위치 표시](assets/images/Untitled%202.png)
+![빙고 개수 & 빙고 발생 위치 표시](images/Untitled%202.png)
 
 빙고 개수 & 빙고 발생 위치 표시
 
-![게임이 종료되고 게임 결과를 출력](assets/images/Untitled%203.png)
+![게임이 종료되고 게임 결과를 출력](images/Untitled%203.png)
 
 게임이 종료되고 게임 결과를 출력
